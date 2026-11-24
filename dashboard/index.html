@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Token Radar v1 — pre-token protocols, valued from their own record</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header id="top">
+  <div class="head-row">
+    <div>
+      <h1>Token Radar</h1>
+      <p class="tag">Pre-token protocols, valued from their own record. Snapshot <span id="asof"></span> · model fitted in this program, refitted in this browser.</p>
+    </div>
+    <div class="head-meta">
+      <div class="head-line">DefiLlama snapshot <span id="asof2"></span></div>
+      <div class="head-line">model: fitted peer multiples × token odds</div>
+      <div class="head-line">no walk-forward claimed — one snapshot date</div>
+    </div>
+  </div>
+  <div id="cards" class="cards"></div>
+  <p class="sens" id="sensitivity"></p>
+  <p class="formula" id="formula"></p>
+</header>
+
+<section id="accounting" aria-label="Protocol accounting">
+  <h2>Protocol accounting</h2>
+  <p class="muted" id="acct-note"></p>
+  <div id="acct-bar" class="acct-bar" role="img" aria-label="All 758 snapshot protocols in exactly one group"></div>
+  <div id="acct-legend" class="acct-legend"></div>
+  <div id="integrity" class="integrity"></div>
+</section>
+
+<section id="evidence" aria-label="Out-of-sample evidence">
+  <h2>Out-of-sample evidence</h2>
+  <p class="muted">A term is kept only if it lowers the held-out miss in both tests: leave-one-family-out, and a cohort hold-out (fit on protocols listed in 2023 or earlier, test on those listed in 2024 or later). The rest are shown, not used.</p>
+  <div class="ev-grid">
+    <div class="ev-col">
+      <h3>Value if a token launches — typical miss, live peers</h3>
+      <table id="tbl-ablation" class="mini"><thead><tr><th>Term, added in order</th><th>Leave-one-out</th><th>Cohort</th><th></th></tr></thead><tbody></tbody></table>
+      <h3>Token odds — Brier score (share called right)</h3>
+      <table id="tbl-odds" class="mini"><thead><tr><th>Term, added in order</th><th>Brier</th><th></th></tr></thead><tbody></tbody></table>
+      <p class="muted">Age and chain count each shave 0.001 off Brier — within noise — and age never enters the odds, so it is never counted twice. The control row above must fail at least one test; it fails the cohort test.</p>
+    </div>
+    <div class="ev-col">
+      <h3>Is the printed range honest?</h3>
+      <table id="tbl-range" class="mini"><thead><tr><th>Share of real caps</th><th>Stated</th><th>Measured</th></tr></thead><tbody></tbody></table>
+      <p class="muted" id="boot-note"></p>
+      <h3>Implied value against TVL — log scales</h3>
+      <svg id="chart" viewBox="0 0 640 170" role="img" aria-label="Scatter of TVL against implied value, log scales"></svg>
+      <p class="muted">Each dot is a ranked protocol. The multiple falls as TVL grows: the fitted log-log slope is negative, so a $2.7B protocol is not priced like a $100M one.</p>
+    </div>
+  </div>
+</section>
+
+<section id="board" aria-label="Board">
+  <div class="tabs" id="mode-tabs" role="tablist" aria-label="Board mode">
+    <button data-mode="pre" class="on">Pre-token board</button>
+    <button data-mode="live">Live peers</button>
+  </div>
+  <div class="tabs" id="verdict-tabs" role="tablist" aria-label="Farm verdict">
+    <button data-verdict="all" class="on">All <span id="c-all"></span></button>
+    <button data-verdict="Farm">Farm <span id="c-farm"></span></button>
+    <button data-verdict="Marginal">Marginal <span id="c-marg"></span></button>
+    <button data-verdict="Skip">Skip <span id="c-skip"></span></button>
+  </div>
+  <div class="controls">
+    <label>Plan size <select id="plan-size"><option value="0.0002" selected>0.02% of TVL</option><option value="0.0001">0.01% of TVL</option><option value="0.0005">0.05% of TVL</option><option value="0.001">0.10% of TVL</option></select></label>
+    <label>Drop share <input type="range" id="drop-share" min="1" max="20" step="1" value="7"> <span id="drop-val">7.0%</span></label>
+    <label>Horizon <input type="range" id="horizon" min="4" max="52" step="1" value="12"> <span id="hor-val">12 wk</span></label>
+    <input id="search" type="search" placeholder="Search name, chain, category" aria-label="Search">
+    <select id="f-category" aria-label="Category"><option value="">All categories</option></select>
+    <select id="f-chain" aria-label="Chain"><option value="">All chains</option></select>
+    <select id="f-tier" aria-label="Tier"><option value="">All tiers</option><option>Watchlist</option><option>Unlisted ≥$50M</option><option>Emerging &lt;$50M</option></select>
+    <button id="btn-reset" type="button">Reset</button>
+    <button id="btn-csv" type="button">CSV</button>
+    <button id="btn-json" type="button">JSON</button>
+  </div>
+  <p class="muted" id="row-count"></p>
+  <table id="tbl" class="board">
+    <thead><tr>
+      <th data-sort="rank"># · Range</th><th data-sort="name">Protocol</th><th data-sort="tvl_usd">TVL</th>
+      <th data-sort="change_7d">7D</th><th data-sort="age_days">No-token age</th><th data-sort="token_odds">Token odds</th>
+      <th data-sort="if_launches_usd">If it launches</th><th data-sort="implied_value_usd">Implied value · P25–P75</th>
+      <th data-sort="verdict">Verdict · Net of fees</th><th data-sort="net_per_hour_usd">Net / hour</th>
+    </tr></thead>
+    <tbody></tbody>
+  </table>
+  <div id="near-miss"></div>
+  <p class="muted">The Live tab shows the priced peers: every protocol whose token already trades is a price, not a rank.</p>
+</section>
+
+<section id="method" aria-label="Method">
+  <h2>How the value is computed</h2>
+  <p id="method-text"></p>
+  <p><strong>Without a token</strong> means both <code>gecko_id</code> and <code>symbol</code> are null — market cap alone misclassifies 258 protocols. <strong>Excluded:</strong> CEX, Bridge, Canonical Bridge, Liquid Staking, Liquid Restaking, Restaked BTC, versioned names, wrapped / staked / staking products, exchange-prefixed names. A protocol records no token; the snapshot never proves it has none.</p>
+  <p id="peer-note"></p>
+</section>
+
+<aside id="drawer" aria-label="Protocol detail" hidden>
+  <button id="close" type="button">Close ×</button>
+  <div id="detail"></div>
+</aside>
+
+<script src="zz-data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
